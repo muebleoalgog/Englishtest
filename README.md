@@ -1,6 +1,6 @@
-# PTE Practice Coach (Web)
+# PTE Practice Coach
 
-A lightweight Flask web app to practice for the Pearson Test of English (PTE). It offers quick practice activities for speaking, writing, listening, and reading, all in your browser.
+A lightweight Windows-friendly desktop app built with Tkinter to help you practice for the Pearson Test of English (PTE). It offers quick practice activities for speaking, writing, listening, and reading without any external dependencies.
 
 ## Features
 - **Speaking:** Note-taking space and guidance for recording your own responses to describe-image or repeat-lecture style tasks.
@@ -9,29 +9,14 @@ A lightweight Flask web app to practice for the Pearson Test of English (PTE). I
 - **Reading:** Multiple-choice single-answer questions with explanations so you can review why the correct option works.
 
 ## Requirements
-- Python 3.9+ with pip
-- Recommended: create a virtual environment
+- Python 3.8+ with Tkinter available (included with standard Windows Python installers).
 
-## Setup and run
-1) Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-2) Start the web app:
+## Running the app
+From the project folder, launch the GUI:
 
 ```bash
 python main.py
 ```
-
-3) Open your browser to http://localhost:5000 and use the navigation bar to switch between sections.
-
-## How to use each section
-- **Speaking:** Read the prompt, jot notes in the text box, then record yourself with any voice recorder app. Listen back and check fluency, pronunciation, and whether you covered the key ideas.
-- **Writing:** Type your response and click **Evaluate draft** to see word count, cohesion hints, and keyword coverage. Use **Next prompt** for another task.
-- **Listening:** Read the short transcript once, answer the summary prompt in 1–2 sentences, then click **Evaluate summary**. Feedback shows word length and which target keywords you captured; **Next lecture** moves to another practice item.
-- **Reading:** Choose the best option and press **Submit** to see if you’re correct and why. **Next question** loads the next item.
 
 ## Tips for use
 - Speak for the full timer when recording yourself; prioritize clarity and natural pacing.

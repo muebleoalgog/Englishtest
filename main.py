@@ -1,7 +1,7 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
 from dataclasses import dataclass, field
 from typing import List, Dict
-
-from flask import Flask, render_template, request
 
 
 @dataclass
@@ -114,14 +114,6 @@ READING_QUESTIONS = [
 ]
 
 
-QUICK_TIPS: Dict[str, str] = {
-    "speaking": "Speak for the full time and focus on clarity over speed.",
-    "writing": "Plan for 1-2 minutes so your structure is clear before typing.",
-    "listening": "Note key nouns and verbs—they carry most of the meaning.",
-    "reading": "Skim the question first, then scan the passage for evidence.",
-}
-
-
 def evaluate_keyword_coverage(text: str, keywords: List[str]) -> int:
     text_lower = text.lower()
     return sum(1 for kw in keywords if kw.lower() in text_lower)
@@ -151,125 +143,231 @@ def evaluate_writing(text: str, target_low: int = 200, target_high: int = 300) -
     else:
         feedback.append("Good cohesion with linking words.")
 
-    return "<br>".join(feedback)
+    return " \n".join(feedback)
 
 
-def evaluate_listening_summary(text: str, exercise: ListeningExercise) -> str:
-    if not text:
-        return "Write a short summary before evaluating."
+class PTEPracticeApp(tk.Tk):
+    def __init__(self) -> None:
+        super().__init__()
+        self.title("PTE Practice Coach")
+        self.geometry("780x520")
+        self.resizable(True, True)
+        self.configure(padx=14, pady=12)
 
-    words = len(text.split())
-    coverage = evaluate_keyword_coverage(text, exercise.keywords)
-    feedback = [f"Length: {words} words (aim for 30-50).", f"Keyword coverage: {coverage}/{len(exercise.keywords)}."]
-    if coverage == len(exercise.keywords):
-        feedback.append("Great! You captured the main points.")
-    else:
-        missing = [kw for kw in exercise.keywords if kw.lower() not in text.lower()]
-        feedback.append("Add details about: " + ", ".join(missing))
-    return "<br>".join(feedback)
+        self.section_var = tk.StringVar(value="Speaking")
+        self.status_var = tk.StringVar(value="Select a task to begin practicing.")
+        self.reading_index = 0
+        self.writing_index = 0
+        self.listening_index = 0
 
+        self._build_header()
+        self.content_frame = ttk.Frame(self)
+        self.content_frame.pack(fill="both", expand=True, pady=10)
 
-def evaluate_reading_answer(choice: int, question: MultipleChoiceQuestion) -> str:
-    if choice == question.answer_index:
-        return "Correct! " + question.explanation
-    return "Not quite. " + question.explanation
+        self.status_bar = ttk.Label(self, textvariable=self.status_var, relief="sunken", anchor="w")
+        self.status_bar.pack(fill="x")
 
+        self.render_speaking()
 
-def create_app() -> Flask:
-    app = Flask(__name__)
+    def _build_header(self) -> None:
+        header = ttk.Frame(self)
+        header.pack(fill="x")
 
-    @app.route("/")
-    def home():
-        return render_template("home.html", active="home", quick_tip="Practice regularly!")
+        ttk.Label(header, text="PTE English Skills", font=("Segoe UI", 16, "bold")).pack(side="left")
 
-    @app.route("/speaking")
-    def speaking():
+        section_choices = ["Speaking", "Writing", "Listening", "Reading"]
+        ttk.Label(header, text="Practice area:", padding=(16, 0, 8, 0)).pack(side="left")
+
+        section_box = ttk.Combobox(header, textvariable=self.section_var, values=section_choices, state="readonly")
+        section_box.pack(side="left")
+        section_box.bind("<<ComboboxSelected>>", self._on_section_change)
+
+        ttk.Button(header, text="Quick tip", command=self._show_tip).pack(side="right")
+
+    def _clear_content(self) -> None:
+        for child in self.content_frame.winfo_children():
+            child.destroy()
+
+    def _on_section_change(self, event=None) -> None:  # type: ignore[override]
+        section = self.section_var.get()
+        if section == "Speaking":
+            self.render_speaking()
+        elif section == "Writing":
+            self.render_writing()
+        elif section == "Listening":
+            self.render_listening()
+        elif section == "Reading":
+            self.render_reading()
+
+    def _show_tip(self) -> None:
+        tips = {
+            "Speaking": "Speak for the full time and focus on clarity over speed.",
+            "Writing": "Plan for 1-2 minutes so your structure is clear before typing.",
+            "Listening": "Note key nouns and verbs—they carry most of the meaning.",
+            "Reading": "Skim the question first, then scan the passage for evidence.",
+        }
+        messagebox.showinfo("Quick Tip", tips.get(self.section_var.get(), "Practice regularly!"))
+
+    # Speaking
+    def render_speaking(self) -> None:
+        self._clear_content()
         prompt = SPEAKING_PROMPTS[0]
-        return render_template(
-            "speaking.html",
-            prompt=prompt,
-            active="speaking",
-            quick_tip=QUICK_TIPS["speaking"],
-        )
+        ttk.Label(self.content_frame, text="Describe Image / Repeat Lecture", font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(0, 6))
+        ttk.Label(self.content_frame, text=prompt, wraplength=700, justify="left").pack(anchor="w", pady=(0, 12))
 
-    @app.route("/writing", methods=["GET", "POST"])
-    def writing():
-        prompt_index = int(request.args.get("prompt", 0)) % len(WRITING_PROMPTS)
-        prompt = WRITING_PROMPTS[prompt_index]
-        response = request.form.get("response", "") if request.method == "POST" else ""
-        feedback = ""
-        if request.method == "POST" and response.strip():
-            keyword_hits = evaluate_keyword_coverage(response, prompt.keywords)
-            feedback_lines = [evaluate_writing(response)]
-            feedback_lines.append(
-                f"Keyword coverage: {keyword_hits}/{len(prompt.keywords)} core ideas mentioned."
-            )
-            feedback = "<br>".join(feedback_lines)
-        elif request.method == "POST":
-            feedback = "Please write your response before evaluating."
+        ttk.Label(self.content_frame, text="Note-taking area:").pack(anchor="w")
+        notes = tk.Text(self.content_frame, height=8, width=80)
+        notes.pack(fill="both", expand=True)
 
-        next_index = (prompt_index + 1) % len(WRITING_PROMPTS)
-        return render_template(
-            "writing.html",
-            prompt=prompt,
-            next_index=next_index,
-            feedback=feedback,
-            response=response,
-            active="writing",
-            quick_tip=QUICK_TIPS["writing"],
-        )
+        ttk.Label(
+            self.content_frame,
+            text=(
+                "Record yourself with any voice recorder and compare against official PTE speaking criteria: "
+                "fluency, pronunciation, and content coverage."
+            ),
+            wraplength=700,
+            justify="left",
+        ).pack(anchor="w", pady=10)
 
-    @app.route("/listening", methods=["GET", "POST"])
-    def listening():
-        exercise_index = int(request.args.get("exercise", 0)) % len(LISTENING_EXERCISES)
-        exercise = LISTENING_EXERCISES[exercise_index]
-        summary = request.form.get("summary", "") if request.method == "POST" else ""
-        feedback = ""
-        if request.method == "POST":
-            feedback = evaluate_listening_summary(summary.strip(), exercise)
+        self.status_var.set("Speaking: prepare briefly, then speak smoothly for the full timer.")
 
-        next_index = (exercise_index + 1) % len(LISTENING_EXERCISES)
-        return render_template(
-            "listening.html",
-            exercise=exercise,
-            next_index=next_index,
-            feedback=feedback,
-            summary=summary,
-            active="listening",
-            quick_tip=QUICK_TIPS["listening"],
-        )
+    # Writing
+    def render_writing(self) -> None:
+        self._clear_content()
+        prompt = WRITING_PROMPTS[self.writing_index % len(WRITING_PROMPTS)]
 
-    @app.route("/reading", methods=["GET", "POST"])
-    def reading():
-        question_index = int(request.args.get("question", 0)) % len(READING_QUESTIONS)
-        question = READING_QUESTIONS[question_index]
-        feedback = ""
-        selected = None
-        if request.method == "POST":
-            choice_raw = request.form.get("choice")
-            if choice_raw is not None:
-                selected = int(choice_raw)
-                feedback = evaluate_reading_answer(selected, question)
-            else:
-                feedback = "Please select an answer before submitting."
+        ttk.Label(self.content_frame, text=prompt.title, font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(0, 6))
+        ttk.Label(self.content_frame, text=prompt.task, wraplength=700, justify="left").pack(anchor="w", pady=(0, 6))
 
-        next_index = (question_index + 1) % len(READING_QUESTIONS)
-        return render_template(
-            "reading.html",
-            question=question,
-            next_index=next_index,
-            feedback=feedback,
-            selected=selected,
-            active="reading",
-            quick_tip=QUICK_TIPS["reading"],
-        )
+        tips_frame = ttk.LabelFrame(self.content_frame, text="Examiner reminders")
+        tips_frame.pack(fill="x", pady=6)
+        for tip in prompt.tips:
+            ttk.Label(tips_frame, text=f"• {tip}", wraplength=680, justify="left").pack(anchor="w", padx=8, pady=2)
 
-    return app
+        self.writing_box = tk.Text(self.content_frame, height=10, width=90)
+        self.writing_box.pack(fill="both", expand=True, pady=8)
+
+        self.writing_feedback = ttk.Label(self.content_frame, text="Word count: 0", justify="left")
+        self.writing_feedback.pack(anchor="w")
+
+        controls = ttk.Frame(self.content_frame)
+        controls.pack(anchor="e", pady=4)
+        ttk.Button(controls, text="Evaluate draft", command=lambda: self._score_writing(prompt)).pack(side="left", padx=4)
+        ttk.Button(controls, text="Next prompt", command=self._next_writing_prompt).pack(side="left", padx=4)
+
+        self.status_var.set("Writing: aim for clear structure and concise sentences.")
+
+    def _score_writing(self, prompt: WritingPrompt) -> None:
+        text = self.writing_box.get("1.0", tk.END).strip()
+        if not text:
+            messagebox.showwarning("No text", "Please write your response before evaluating.")
+            return
+
+        feedback_lines = [evaluate_writing(text)]
+        keyword_hits = evaluate_keyword_coverage(text, prompt.keywords)
+        feedback_lines.append(f"Keyword coverage: {keyword_hits}/{len(prompt.keywords)} core ideas mentioned.")
+
+        self.writing_feedback.config(text="\n".join(feedback_lines))
+        self.status_var.set("Writing feedback updated. Adjust your draft based on the notes.")
+
+    def _next_writing_prompt(self) -> None:
+        self.writing_index += 1
+        self.render_writing()
+
+    # Listening
+    def render_listening(self) -> None:
+        self._clear_content()
+        exercise = LISTENING_EXERCISES[self.listening_index % len(LISTENING_EXERCISES)]
+
+        ttk.Label(self.content_frame, text=exercise.title, font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(0, 6))
+        ttk.Label(self.content_frame, text="Transcript (read once, then hide it in the real test)", font=("Segoe UI", 9, "italic")).pack(anchor="w")
+
+        transcript_box = tk.Text(self.content_frame, height=6, wrap="word", state="normal")
+        transcript_box.insert("1.0", exercise.transcript)
+        transcript_box.config(state="disabled")
+        transcript_box.pack(fill="both", expand=False, pady=6)
+
+        ttk.Label(self.content_frame, text=exercise.question, wraplength=700, justify="left").pack(anchor="w", pady=(0, 6))
+
+        self.listening_box = tk.Text(self.content_frame, height=8, width=90)
+        self.listening_box.pack(fill="both", expand=True)
+
+        self.listening_feedback = ttk.Label(self.content_frame, text="Write a 1-2 sentence summary.")
+        self.listening_feedback.pack(anchor="w", pady=4)
+
+        controls = ttk.Frame(self.content_frame)
+        controls.pack(anchor="e", pady=4)
+        ttk.Button(controls, text="Evaluate summary", command=lambda: self._score_listening(exercise)).pack(side="left", padx=4)
+        ttk.Button(controls, text="Next lecture", command=self._next_listening_exercise).pack(side="left", padx=4)
+
+        self.status_var.set("Listening: capture nouns/verbs and link them with transition words.")
+
+    def _score_listening(self, exercise: ListeningExercise) -> None:
+        text = self.listening_box.get("1.0", tk.END).strip()
+        if not text:
+            messagebox.showwarning("No summary", "Write a short summary before evaluating.")
+            return
+
+        words = len(text.split())
+        coverage = evaluate_keyword_coverage(text, exercise.keywords)
+        feedback = [f"Length: {words} words (aim for 30-50).", f"Keyword coverage: {coverage}/{len(exercise.keywords)}."]
+        if coverage == len(exercise.keywords):
+            feedback.append("Great! You captured the main points.")
+        else:
+            missing = [kw for kw in exercise.keywords if kw.lower() not in text.lower()]
+            feedback.append("Add details about: " + ", ".join(missing))
+
+        self.listening_feedback.config(text="\n".join(feedback))
+        self.status_var.set("Listening feedback updated. Refine your summary.")
+
+    def _next_listening_exercise(self) -> None:
+        self.listening_index += 1
+        self.render_listening()
+
+    # Reading
+    def render_reading(self) -> None:
+        self._clear_content()
+        question = READING_QUESTIONS[self.reading_index % len(READING_QUESTIONS)]
+
+        ttk.Label(self.content_frame, text="Multiple-choice, single answer", font=("Segoe UI", 13, "bold")).pack(anchor="w", pady=(0, 6))
+        ttk.Label(self.content_frame, text=question.prompt, wraplength=700, justify="left").pack(anchor="w", pady=(0, 8))
+
+        self.reading_choice = tk.IntVar(value=-1)
+        for idx, option in enumerate(question.options):
+            ttk.Radiobutton(self.content_frame, text=option, variable=self.reading_choice, value=idx, wraplength=680).pack(anchor="w", pady=2)
+
+        self.reading_feedback = ttk.Label(self.content_frame, text="Select the best answer and submit.")
+        self.reading_feedback.pack(anchor="w", pady=6)
+
+        controls = ttk.Frame(self.content_frame)
+        controls.pack(anchor="e", pady=4)
+        ttk.Button(controls, text="Submit", command=lambda: self._score_reading(question)).pack(side="left", padx=4)
+        ttk.Button(controls, text="Next question", command=self._next_reading_question).pack(side="left", padx=4)
+
+        self.status_var.set("Reading: pick the option that directly answers the question.")
+
+    def _score_reading(self, question: MultipleChoiceQuestion) -> None:
+        choice = self.reading_choice.get()
+        if choice == -1:
+            messagebox.showwarning("No option selected", "Please choose an answer before submitting.")
+            return
+
+        if choice == question.answer_index:
+            feedback = "Correct! " + question.explanation
+        else:
+            feedback = f"Not quite. {question.explanation}"
+
+        self.reading_feedback.config(text=feedback)
+        self.status_var.set("Reading feedback updated. Move to the next question to keep practicing.")
+
+    def _next_reading_question(self) -> None:
+        self.reading_index += 1
+        self.render_reading()
 
 
 def main() -> None:
-    app = create_app()
-    app.run(host="0.0.0.0", port=5000, debug=False)
+    app = PTEPracticeApp()
+    app.mainloop()
 
 
 if __name__ == "__main__":
