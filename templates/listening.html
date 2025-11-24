@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="pte-card">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h1 class="h4 mb-1">{{ exercise.title }}</h1>
+      <p class="mb-0 text-muted">Read the transcript once, then summarize in 1-2 sentences.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url_for('listening', exercise=next_index) }}">Next lecture</a>
+  </div>
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Transcript</div>
+    <div class="card-body">
+      <p class="mb-0">{{ exercise.transcript }}</p>
+    </div>
+  </div>
+  <p><strong>Question:</strong> {{ exercise.question }}</p>
+  <form method="post">
+    <div class="mb-3">
+      <label for="summary" class="form-label">Write your summary</label>
+      <textarea class="form-control" id="summary" name="summary" rows="8" placeholder="Capture the main idea in 30-50 words...">{{ summary or '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Evaluate summary</button>
+  </form>
+  {% if feedback %}
+  <div class="alert alert-info mt-3" role="alert">
+    {{ feedback | safe }}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

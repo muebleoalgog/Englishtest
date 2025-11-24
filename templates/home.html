@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="pte-card">
+  <h1 class="h4 mb-3">Welcome to PTE Practice Coach</h1>
+  <p class="mb-3">Use the navigation bar to switch between Speaking, Writing, Listening, and Reading practice areas. Each page includes a short tip and feedback tailored to the task.</p>
+  <div class="list-group">
+    <a href="{{ url_for('speaking') }}" class="list-group-item list-group-item-action">Speaking: Describe Image / Repeat Lecture</a>
+    <a href="{{ url_for('writing') }}" class="list-group-item list-group-item-action">Writing: Summarize Written Text &amp; Essays</a>
+    <a href="{{ url_for('listening') }}" class="list-group-item list-group-item-action">Listening: Summarize Spoken Text</a>
+    <a href="{{ url_for('reading') }}" class="list-group-item list-group-item-action">Reading: Multiple-choice, single answer</a>
+  </div>
+</div>
+{% endblock %}
