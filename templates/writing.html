@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="pte-card">
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <h1 class="h4 mb-1">{{ prompt.title }}</h1>
+      <p class="mb-0 text-muted">Aim for 200-300 words and link ideas clearly.</p>
+    </div>
+    <a class="btn btn-outline-primary" href="{{ url_for('writing', prompt=next_index) }}">Next prompt</a>
+  </div>
+  <p class="mb-3">{{ prompt.task }}</p>
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Examiner reminders</div>
+    <ul class="list-group list-group-flush">
+      {% for tip in prompt.tips %}
+      <li class="list-group-item">{{ tip }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  <form method="post">
+    <div class="mb-3">
+      <label for="response" class="form-label">Draft your answer</label>
+      <textarea class="form-control" id="response" name="response" rows="10" placeholder="Write your essay or summary here...">{{ response or '' }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Evaluate draft</button>
+  </form>
+  {% if feedback %}
+  <div class="alert alert-success mt-3" role="alert">
+    {{ feedback | safe }}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
