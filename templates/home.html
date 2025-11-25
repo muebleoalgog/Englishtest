@@ -3,14 +3,6 @@
 <div class="pte-card">
   <h1 class="h4 mb-3">Welcome to PTE Practice Coach</h1>
   <p class="mb-3">Use the navigation bar to switch between Speaking, Writing, Listening, and Reading practice areas. Each page includes a short tip and feedback tailored to the task.</p>
-  <div class="alert alert-info" role="alert">
-    <div class="fw-semibold mb-1">Quick start</div>
-    <ol class="mb-0">
-      <li>Run <code>python main.py</code> in your terminal.</li>
-      <li>Open <a class="link-dark" href="http://localhost:5000">http://localhost:5000</a> in your browser.</li>
-      <li>Pick a skill area below and submit a response to see instant feedback.</li>
-    </ol>
-  </div>
   <div class="list-group">
     <a href="{{ url_for('speaking') }}" class="list-group-item list-group-item-action">Speaking: Describe Image / Repeat Lecture</a>
     <a href="{{ url_for('writing') }}" class="list-group-item list-group-item-action">Writing: Summarize Written Text &amp; Essays</a>

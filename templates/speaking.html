@@ -2,148 +2,15 @@
 {% block content %}
 <div class="pte-card">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h1 class="h4 mb-0">Speaking Practice</h1>
-      <p class="text-muted small mb-0">Describe Image / Repeat Lecture</p>
-    </div>
-    <div class="text-end">
-      <span class="badge text-bg-primary">Prompt {{ prompt_index + 1 }} of {{ total_prompts }}</span>
-      <div class="mt-1">
-        <a class="btn btn-sm btn-outline-primary" href="{{ url_for('speaking', prompt=next_index) }}">Next prompt</a>
-      </div>
-    </div>
+    <h1 class="h4 mb-0">Speaking Practice</h1>
+    <span class="badge text-bg-primary">Describe Image / Repeat Lecture</span>
   </div>
   <p class="fs-6">{{ prompt }}</p>
-  <p class="text-muted small">Use the built-in recorder below or any recorder on your phone. Aim for 35-40 seconds with even pacing.</p>
-  <div class="d-flex align-items-center gap-2 mt-3">
-    <button id="mic-toggle" class="btn btn-primary" type="button">🎤 Start voice capture</button>
-    <span id="mic-status" class="text-muted small">Microphone ready</span>
-    <span id="mic-timer" class="badge text-bg-light text-dark">40s</span>
-  </div>
-  <h2 class="h6 mt-3">Live transcript</h2>
-  <textarea
-    id="transcript"
-    class="form-control"
-    rows="4"
-    placeholder="Press Start voice capture and speak; recognized text will appear here..."
-  ></textarea>
+  <p class="text-muted small">Use any recorder on your phone or computer and speak for 30-40 seconds with even pacing.</p>
   <h2 class="h6 mt-4">Note-taking area</h2>
   <textarea class="form-control" rows="6" placeholder="Write key nouns and verbs before you speak..."></textarea>
-  <div class="row row-cols-1 row-cols-md-2 g-3 mt-3">
-    <div class="col">
-      <div class="alert alert-secondary mb-0" role="alert">
-        <div class="fw-semibold">How to use the timer</div>
-        <ul class="mb-0 small">
-          <li>Press Start to begin recording and start a 40-second countdown.</li>
-          <li>Stop will pause capture and reset the timer for another try.</li>
-          <li>Reuse the prompt or tap Next prompt for a fresh topic.</li>
-        </ul>
-      </div>
-    </div>
-    <div class="col">
-      <div class="alert alert-info mb-0" role="alert">
-        <div class="fw-semibold">Self-assessment checklist</div>
-        <ul class="mb-0 small">
-          <li>Did you cover who/what/why in the first 10 seconds?</li>
-          <li>Are your sentences evenly paced without long pauses?</li>
-          <li>Did you stress key nouns and verbs clearly?</li>
-        </ul>
-      </div>
-    </div>
-  </div>
   <div class="alert alert-info mt-3 mb-0" role="alert">
     Focus on pronunciation and content coverage. After recording, listen back and rate fluency, pronunciation, and content.
   </div>
 </div>
-<script>
-  (() => {
-    const transcriptEl = document.getElementById("transcript");
-    const statusEl = document.getElementById("mic-status");
-    const toggleBtn = document.getElementById("mic-toggle");
-    const timerEl = document.getElementById("mic-timer");
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (!Recognition) {
-      statusEl.textContent = "Speech recognition not supported in this browser.";
-      toggleBtn.disabled = true;
-      toggleBtn.classList.replace("btn-primary", "btn-secondary");
-      return;
-    }
-
-    let listening = false;
-    let countdownId = null;
-    let remaining = 40;
-    const recognition = new Recognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = "en-US";
-
-    const setListeningState = (isListening) => {
-      listening = isListening;
-      toggleBtn.textContent = isListening ? "⏹ Stop voice capture" : "🎤 Start voice capture";
-      statusEl.textContent = isListening ? "Listening..." : "Microphone ready";
-    };
-
-    const resetTimer = () => {
-      if (countdownId) {
-        clearInterval(countdownId);
-      }
-      remaining = 40;
-      timerEl.textContent = `${remaining}s`;
-      countdownId = null;
-    };
-
-    const startTimer = () => {
-      resetTimer();
-      countdownId = setInterval(() => {
-        remaining -= 1;
-        timerEl.textContent = `${remaining}s`;
-        if (remaining <= 0) {
-          recognition.stop();
-          setListeningState(false);
-          resetTimer();
-        }
-      }, 1000);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript)
-        .join(" ");
-      transcriptEl.value = transcript.trim();
-    };
-
-    recognition.onend = () => {
-      if (listening) {
-        recognition.start();
-      } else {
-        setListeningState(false);
-        resetTimer();
-      }
-    };
-
-    recognition.onerror = () => {
-      setListeningState(false);
-      statusEl.textContent = "Unable to access microphone. Check permissions.";
-      resetTimer();
-    };
-
-    toggleBtn.addEventListener("click", () => {
-      if (!listening) {
-        try {
-          recognition.start();
-          setListeningState(true);
-          startTimer();
-        } catch (error) {
-          statusEl.textContent = "Microphone busy or blocked. Allow access and try again.";
-          resetTimer();
-        }
-      } else {
-        recognition.stop();
-        setListeningState(false);
-        resetTimer();
-      }
-    });
-  })();
-</script>
 {% endblock %}
